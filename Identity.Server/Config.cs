@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace Identity.Server
 {
-    internal static class Configuation
+    internal static class Config
     {
         internal static IEnumerable<IdentityResource> IdentityResources = new List<IdentityResource> {
                new IdentityResources.OpenId(),

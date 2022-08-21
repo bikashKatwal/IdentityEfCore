@@ -1,4 +1,6 @@
 using Identity.Server.Data;
+using IdentityServer4.EntityFramework.DbContexts;
+using IdentityServer4.EntityFramework.Mappers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -18,21 +20,22 @@ namespace Identity.Server
 {
     public class Startup
     {
+        private readonly IConfiguration _configuration;
+
         public Startup(IConfiguration configuration)
         {
-            Configuration = configuration;
+            _configuration = configuration;
         }
 
-        public IConfiguration Configuration { get; }
 
         public void ConfigureServices(IServiceCollection services)
         {
-            var connectionString = Configuration.GetConnectionString("DefaultConnection");
+            var connectionString = _configuration.GetConnectionString("DefaultConnection");
             var migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
             services.AddDbContext<AppDbContext>(config =>
             {
-                //config.UseSqlServer(connectionString);
-                config.UseInMemoryDatabase("MemoryDb");
+                config.UseSqlServer(connectionString);
+                //config.UseInMemoryDatabase("MemoryDb");
             });
 
             services.AddIdentity<IdentityUser, IdentityRole>(config =>
@@ -48,24 +51,25 @@ namespace Identity.Server
             {
                 config.Cookie.Name = "IdentityServer.Cookie";
                 config.LoginPath = "/Auth/Login";
+                config.LogoutPath = "/Auth/Login";
             });
 
             services.AddIdentityServer()
                  .AddAspNetIdentity<IdentityUser>()
-                 //  .AddConfigurationStore(options =>
-                 //  {
-                 //      options.ConfigureDbContext = b => b.UseSqlServer(connectionString,
-                 //          sql => sql.MigrationsAssembly(migrationsAssembly));
-                 //  })
-                 //.AddOperationalStore(options =>
-                 //{
-                 //    options.ConfigureDbContext = b => b.UseSqlServer(connectionString,
-                 //        sql => sql.MigrationsAssembly(migrationsAssembly));
-                 //})
-                 .AddInMemoryIdentityResources(Configuation.IdentityResources)
-                 .AddInMemoryApiResources(Configuation.ApiResources)
-                 .AddInMemoryApiScopes(Configuation.ApiScopes)
-                 .AddInMemoryClients(Configuation.Clients)
+                   .AddConfigurationStore(options =>
+                   {
+                       options.ConfigureDbContext = b => b.UseSqlServer(connectionString,
+                           sql => sql.MigrationsAssembly(migrationsAssembly));
+                   })
+                 .AddOperationalStore(options =>
+                 {
+                     options.ConfigureDbContext = b => b.UseSqlServer(connectionString,
+                         sql => sql.MigrationsAssembly(migrationsAssembly));
+                 })
+                 //.AddInMemoryIdentityResources(Configuation.IdentityResources)
+                 //.AddInMemoryApiResources(Configuation.ApiResources)
+                 //.AddInMemoryApiScopes(Configuation.ApiScopes)
+                 //.AddInMemoryClients(Configuation.Clients)
                  .AddDeveloperSigningCredential();
 
             services.AddControllersWithViews();
@@ -74,6 +78,8 @@ namespace Identity.Server
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            // this will do the initial DB population
+            InitializeDatabase(app);
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -87,5 +93,43 @@ namespace Identity.Server
                 endpoints.MapDefaultControllerRoute();
             });
         }
+
+        private void InitializeDatabase(IApplicationBuilder app)
+        {
+            using (var serviceScope = app.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope())
+            {
+                serviceScope.ServiceProvider.GetRequiredService<PersistedGrantDbContext>().Database.Migrate();
+
+                var context = serviceScope.ServiceProvider.GetRequiredService<ConfigurationDbContext>();
+                context.Database.Migrate();
+                if (!context.Clients.Any())
+                {
+                    foreach (var client in Config.Clients)
+                    {
+                        context.Clients.Add(client.ToEntity());
+                    }
+                    context.SaveChanges();
+                }
+
+                if (!context.IdentityResources.Any())
+                {
+                    foreach (var resource in Config.IdentityResources)
+                    {
+                        context.IdentityResources.Add(resource.ToEntity());
+                    }
+                    context.SaveChanges();
+                }
+
+                if (!context.ApiScopes.Any())
+                {
+                    foreach (var resource in Config.ApiScopes)
+                    {
+                        context.ApiScopes.Add(resource.ToEntity());
+                    }
+                    context.SaveChanges();
+                }
+            }
+        }
+
     }
 }

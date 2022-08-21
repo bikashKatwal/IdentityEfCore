@@ -17,17 +17,17 @@ namespace Identity.Server
         {
             var host = CreateHostBuilder(args).Build();
 
-            using (var scope = host.Services.CreateScope())
-            {
-                var userManager = scope.ServiceProvider
-                    .GetRequiredService<UserManager<IdentityUser>>();
-                var user = new IdentityUser("bob");
-                userManager.CreateAsync(user, "password").GetAwaiter().GetResult();
-                userManager.AddClaimAsync(user, 
-                    new System.Security.Claims.Claim("Identity.Admin", "Admin.Cookie")).GetAwaiter().GetResult();
-                userManager.AddClaimAsync(user,
-                 new System.Security.Claims.Claim("Identity.Api.Admin", "Admin.Api.Cookie")).GetAwaiter().GetResult();
-            }
+            //using (var scope = host.Services.CreateScope())
+            //{
+            //    var userManager = scope.ServiceProvider
+            //        .GetRequiredService<UserManager<IdentityUser>>();
+            //    var user = new IdentityUser("bob");
+            //    userManager.CreateAsync(user, "password").GetAwaiter().GetResult();
+            //    userManager.AddClaimAsync(user, 
+            //        new System.Security.Claims.Claim("Identity.Admin", "Admin.Cookie")).GetAwaiter().GetResult();
+            //    userManager.AddClaimAsync(user,
+            //     new System.Security.Claims.Claim("Identity.Api.Admin", "Admin.Api.Cookie")).GetAwaiter().GetResult();
+            //}
 
             host.Run();
             //CreateHostBuilder(args).Build().Run();
