@@ -48,6 +48,7 @@ namespace Identity.Server
                         //RequirePkce = true,// GO THROUGH IT IN DETAILS
                                             //AllowedGrantTypes = GrantTypes.Implicit,
                         RedirectUris={ "https://localhost:44350/signin-oidc" },
+                        PostLogoutRedirectUris={ "https://localhost:44350/Home/Index" },
                         AllowedScopes = {
                             "ApiOne",
                             "ApiTwo",

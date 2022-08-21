@@ -72,12 +72,17 @@ namespace Mvc.Client.Controllers
             });
 
             var authInfo = await HttpContext.AuthenticateAsync("Cookie");
-            authInfo.Properties.UpdateTokenValue("access_token",tokenResponse.AccessToken);
+            authInfo.Properties.UpdateTokenValue("access_token", tokenResponse.AccessToken);
             authInfo.Properties.UpdateTokenValue("id_token", tokenResponse.IdentityToken);
-            authInfo.Properties.UpdateTokenValue("refresh_token",tokenResponse.RefreshToken);
+            authInfo.Properties.UpdateTokenValue("refresh_token", tokenResponse.RefreshToken);
 
-            await HttpContext.SignInAsync("Cookie", authInfo.Principal,authInfo.Properties);
+            await HttpContext.SignInAsync("Cookie", authInfo.Principal, authInfo.Properties);
 
+        }
+
+        public IActionResult Logout()
+        {
+            return SignOut("Cookie", "oidc");
         }
 
 
