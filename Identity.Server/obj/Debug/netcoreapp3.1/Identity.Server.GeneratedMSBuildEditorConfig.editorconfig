@@ -1,0 +1,3 @@
+is_global = true
+build_property.RootNamespace = Identity.Server
+build_property.ProjectDir = C:\Personal\Tutorials\IdentityServer\Identity\Identity.Server\
